@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>OpusJS test</title>
+  </head>
+  <body>
+    <div>
+        <pre id="log"></pre>
+    </div>
+    <script src="../build/opus.js"></script>
+    <script>
+    "use strict";
+    function log() {
+        document.querySelector('#log').textContent += Array.prototype.join.call(arguments, '') + '\n';
+    }
+    opus.onRuntimeInitialized = _ => {
+      log(`libopus version is ${opus.get_version_string()}`);
+      log(`error code 0 means ${opus.strerror(0)}`);
+      log(`error code -2 means ${opus.strerror(-2)}`);
+    };
+    </script>
+  </body>
+</html>
