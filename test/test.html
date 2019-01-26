@@ -5,6 +5,9 @@
   </head>
   <body>
     <div>
+      <button type="button" id="start" style="visibility: hidden">Start</button>
+    </div>
+    <div>
       <input type="range" min="2000" max="10000" value="4000" id="bitrate" step="500" list="bitmarks">
       <datalist id="bitmarks">
         <option value="2000" label="2000">
@@ -17,7 +20,6 @@
     <script src="../build/opus.js"></script>
     <script>
     "use strict";
-    const slider = document.getElementById("bitrate");
     function log() {
         document.querySelector('#log').textContent += Array.prototype.join.call(arguments, '') + '\n';
     }
@@ -45,6 +47,7 @@
         const opusFrameSize  = opusSampleRate / 1000 * 40; // run opus with 40ms frames
         const enc = opus.encoder_create(opusSampleRate, 1, opus.APPLICATION.VOIP);
         const dec = opus.decoder_create(opusSampleRate, 1, opus.APPLICATION.VOIP);
+        const slider = document.getElementById("bitrate");
         slider.onchange = function () { 
           opus.encoder_ctl(enc, opus.CTL.SET_BITRATE, this.value); 
           log("changed bitrate to ", this.value," bit/s");
@@ -55,7 +58,7 @@
         let   pcmOut = [];      // for output (float32)
         const opusFrames = [];  // for encoded frames (Uint8Array)
 
-        const context = new window.AudioContext();
+        const context = new (window.AudioContext || window.webkitAudioContext)();
         // creates an audio node from the microphone incoming stream
         const audioInput = context.createMediaStreamSource(e);
         // script processor enables us to manipulate raw buffers
@@ -84,7 +87,18 @@
 
         // we connect the recorder
         audioInput.connect(processor);
-        processor.connect (context.destination);
+        processor.connect(context.destination);
+
+        // newer browsers require a user action to start the context
+        if (context.state != 'running') {
+          log('context is ',context.state);
+          const btn = document.getElementById("start");
+          btn.onclick = function () {
+            context.resume();
+            btn.style.visibility='hidden';
+          };
+          btn.style.visibility='';
+        }
       }
     }
     </script>
