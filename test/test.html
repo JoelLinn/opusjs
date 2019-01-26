@@ -17,7 +17,62 @@
       log(`libopus version is ${opus.get_version_string()}`);
       log(`error code 0 means ${opus.strerror(0)}`);
       log(`error code -2 means ${opus.strerror(-2)}`);
+
+      startEcho();
     };
+
+    function startEcho() {
+      if (navigator.getUserMedia){
+        navigator.getUserMedia({audio:true}, success, function(e) {
+          alert('Error capturing audio.');
+        });
+      } else alert('getUserMedia not supported in this browser.');
+
+      function success(e){
+        console.log('user media acquired');
+
+        // create encoder/decoder
+        const opusSampleRate = 48000
+        const opusFrameSize  = opusSampleRate / 1000 * 20; // run opus with 20ms frames
+        const enc = opus.encoder_create(opusSampleRate, 1, opus.APPLICATION.VOIP);
+        const dec = opus.decoder_create(opusSampleRate, 1, opus.APPLICATION.VOIP);
+        // create buffers to satisfy frame size requrements of opus and the audio api
+        let   pcmIn = [];       // for microphone (float32)
+        let   pcmOut = [];      // for output (float32)
+        const opusFrames = [];  // for encoded frames (Uint8Array)
+
+        const context = new window.AudioContext();
+        // creates an audio node from the microphone incoming stream
+        const audioInput = context.createMediaStreamSource(e);
+        // script processor enables us to manipulate raw buffers
+        const processor = context.createScriptProcessor(0, 1, 1);
+        processor.onaudioprocess = function(e){
+            // copy microphone samples to buffer
+            Array.prototype.push.apply(pcmIn, e.inputBuffer.getChannelData(0));
+
+            // if there is enough data encode a frame
+            while (pcmIn.length >= opusFrameSize) {
+              opusFrames.push(opus.encode_float(enc, pcmIn.slice(0,opusFrameSize)));
+              pcmIn = pcmIn.slice(opusFrameSize);
+            }
+
+            // delay 50 opus frames before decoding
+            while (opusFrames.length >= 50) {
+              Array.prototype.push.apply(pcmOut, opus.decode_float(dec, opusFrames.shift()));
+            }
+
+            // write output data
+            if (pcmOut.length >= e.outputBuffer.length) {
+              e.outputBuffer.copyToChannel(new Float32Array(pcmOut.slice(0, e.outputBuffer.length)), 0);
+              pcmOut = pcmOut.slice(e.outputBuffer.length);
+            }
+        }
+
+        // we connect the recorder
+        audioInput.connect(processor);
+        processor.connect (context.destination);
+      }
+    }
     </script>
   </body>
 </html>

@@ -20,7 +20,7 @@ bind:
 init: autogen configure bind
 compile:
 	mkdir -p ./build; \
-	emcc ${EMCC_OPTS} --bind -I ${OPUS_DIR}/include --post-js ./src/wrapper.js ${OPUS_DIR}/.libs/libopus.a -o build/opus.js; \
+	emcc ${EMCC_OPTS} --bind -I ${OPUS_DIR}/include --post-js ./src/defines.js --post-js ./src/functions.js  ${OPUS_DIR}/.libs/libopus.a -o build/opus.js; \
 	cp -f ${OPUS_DIR}/COPYING build/COPYING.libopus;
 test:
 	emrun --serve_root ./ ./test/test.html
