@@ -5,23 +5,32 @@
   </head>
   <body>
     <div>
+      <input type="range" min="2000" max="10000" value="4000" id="bitrate" step="500" list="bitmarks">
+      <datalist id="bitmarks">
+        <option value="2000" label="2000">
+        <option value="10000" label="10000">
+      </datalist>
+    </div>
+    <div>
         <pre id="log"></pre>
     </div>
     <script src="../build/opus.js"></script>
     <script>
     "use strict";
+    const slider = document.getElementById("bitrate");
     function log() {
         document.querySelector('#log').textContent += Array.prototype.join.call(arguments, '') + '\n';
     }
     opus.onRuntimeInitialized = _ => {
       log(`libopus version is ${opus.get_version_string()}`);
-      log(`error code 0 means ${opus.strerror(0)}`);
-      log(`error code -2 means ${opus.strerror(-2)}`);
 
       startEcho();
     };
 
     function startEcho() {
+      if (!navigator.getUserMedia)
+        navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia;
+
       if (navigator.getUserMedia){
         navigator.getUserMedia({audio:true}, success, function(e) {
           alert('Error capturing audio.');
@@ -29,13 +38,18 @@
       } else alert('getUserMedia not supported in this browser.');
 
       function success(e){
-        console.log('user media acquired');
+        log('user media acquired');
 
         // create encoder/decoder
         const opusSampleRate = 48000
-        const opusFrameSize  = opusSampleRate / 1000 * 20; // run opus with 20ms frames
+        const opusFrameSize  = opusSampleRate / 1000 * 40; // run opus with 40ms frames
         const enc = opus.encoder_create(opusSampleRate, 1, opus.APPLICATION.VOIP);
         const dec = opus.decoder_create(opusSampleRate, 1, opus.APPLICATION.VOIP);
+        slider.onchange = function () { 
+          opus.encoder_ctl(enc, opus.CTL.SET_BITRATE, this.value); 
+          log("changed bitrate to ", this.value," bit/s");
+        };
+        slider.onchange();
         // create buffers to satisfy frame size requrements of opus and the audio api
         let   pcmIn = [];       // for microphone (float32)
         let   pcmOut = [];      // for output (float32)

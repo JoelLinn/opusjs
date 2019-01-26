@@ -3,7 +3,7 @@ Module["encoder_create"] = function (Fs, channels, application) {
 
 	const ret = Module._opus_encoder_create(Fs, channels, application, errorPtr);
 
-	const error = Module.getValue(errorPtr);
+	const error = Module.getValue(errorPtr, 'i32');
 	Module._free(errorPtr);
 	if (error != 0) {
 		throw error;
@@ -36,6 +36,10 @@ Module["encode_float"] = function (st, pcm) {
 
 Module["encoder_destroy"] = function (st) {
 	Module._opus_encoder_destroy(st);
+};
+
+Module["encoder_ctl"] = function () {
+	_coder_ctl(Module._opus_encoder_ctl_1, arguments);
 };
 
 
@@ -83,6 +87,10 @@ Module["decoder_destroy"] = function (st) {
 	Module._opus_decoder_destroy(st);
 };
 
+Module["decoder_ctl"] = function () {
+	_coder_ctl(Module._opus_decoder_ctl_1, arguments);
+};
+
 
 Module["strerror"] = function (error) { 
 	return Pointer_stringify(Module._opus_strerror(error));
@@ -91,3 +99,28 @@ Module["strerror"] = function (error) {
 Module["get_version_string"] = function () { 
 	return Pointer_stringify(Module._opus_get_version_string());
 };
+
+function _coder_ctl() {
+	const func = arguments[0];
+	const args = arguments[1];
+	if (args[1] % 2 == 0) { // "In general, SETs should be even and GETs should be odd." - hope thats true
+		// SET
+		if (args.length != 3) throw -1;
+
+		const error = func(args[0], args[1], args[2]);
+		if (error < 0) throw error;
+	} else {
+		// GET
+		if (args.length != 2) throw -1;
+
+		const outPtr = Module._malloc(4);
+		const error = func(args[0], args[1], outPtr);
+		if (error < 0) {
+			Module._free(outPtr);
+			throw error;
+		}
+		const out = Module.getValue(outPtr, 'i32');
+		Module._free(outPtr);
+		return out;
+	}
+}
