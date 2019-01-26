@@ -80,7 +80,7 @@
 
             // write output data
             if (pcmOut.length >= e.outputBuffer.length) {
-              e.outputBuffer.copyToChannel(new Float32Array(pcmOut.slice(0, e.outputBuffer.length)), 0);
+              e.outputBuffer.getChannelData(0).set(pcmOut.slice(0, e.outputBuffer.length));
               pcmOut = pcmOut.slice(e.outputBuffer.length);
             }
         }
