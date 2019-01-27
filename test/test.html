@@ -46,7 +46,7 @@
         const opusSampleRate = 48000
         const opusFrameSize  = opusSampleRate / 1000 * 40; // run opus with 40ms frames
         const enc = opus.encoder_create(opusSampleRate, 1, opus.APPLICATION.VOIP);
-        const dec = opus.decoder_create(opusSampleRate, 1, opus.APPLICATION.VOIP);
+        const dec = opus.decoder_create(opusSampleRate, 1);
         const slider = document.getElementById("bitrate");
         slider.onchange = function () { 
           opus.encoder_ctl(enc, opus.CTL.SET_BITRATE, this.value); 
