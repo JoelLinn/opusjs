@@ -39,7 +39,7 @@ Module["encoder_destroy"] = function (st) {
 };
 
 Module["encoder_ctl"] = function () {
-	_coder_ctl(Module._opus_encoder_ctl_1, arguments);
+	return _coder_ctl(Module._opus_encoder_ctl_0, Module._opus_encoder_ctl_1, arguments);
 };
 
 
@@ -88,7 +88,7 @@ Module["decoder_destroy"] = function (st) {
 };
 
 Module["decoder_ctl"] = function () {
-	_coder_ctl(Module._opus_decoder_ctl_1, arguments);
+	return _coder_ctl(Module._opus_decoder_ctl_0, Module._opus_decoder_ctl_1, arguments);
 };
 
 
@@ -101,20 +101,26 @@ Module["get_version_string"] = function () {
 };
 
 function _coder_ctl() {
-	const func = arguments[0];
-	const args = arguments[1];
+	const func_0 = arguments[0];
+	const func_1 = arguments[1];
+	const args = arguments[2];
 	if (args[1] % 2 == 0) { // "In general, SETs should be even and GETs should be odd." - hope thats true
 		// SET
-		if (args.length != 3) throw -1;
-
-		const error = func(args[0], args[1], args[2]);
+		var error;
+		if (args[1] === Module.CTL.RESET_STATE) {
+			if (args.length != 2) throw -1;
+			error = func_0(args[0], args[1]);
+		} else {
+			if (args.length != 3) throw -1;
+			error = func_1(args[0], args[1], args[2]);
+		}
 		if (error < 0) throw error;
 	} else {
 		// GET
 		if (args.length != 2) throw -1;
 
 		const outPtr = Module._malloc(4);
-		const error = func(args[0], args[1], outPtr);
+		const error = func_1(args[0], args[1], outPtr);
 		if (error < 0) {
 			Module._free(outPtr);
 			throw error;
